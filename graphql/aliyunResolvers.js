@@ -56,9 +56,11 @@ async function transcriptionCreate (args) {
     body: JSON.stringify({
       'app_key': 'nls-service-telephone8khz',
       'oss_link': args.fileURL,
-      'auto_split': true
-      // enable_callback
-      // callback_url
+      'auto_split': args.autoSplit,
+      'callback_url': args.callbackURL,
+      'enable_callback': !!args.callbackURL,
+      'vocabulary_id': args.vocabularyId,
+      'customization_id': args.customizationId
     }),
     headers: {
       'accept': 'application/json',
@@ -72,13 +74,14 @@ async function transcriptionCreate (args) {
   try {
     let response = await fetch('https://nlsapi.aliyun.com/transcriptions', options)
     if (response.status >= 400) {
-      debug('response', response)
+      debug('error result', await response.json())
       throw new Error('Bad response from server')
     }
     let createdTranscription = await response.json()
     debug('createdTranscription', createdTranscription)
 
-    if (options && options.callbackURL) {
+    if (args.callbackURL) {
+      debug(`Transcription result of ${JSON.stringify(createdTranscription)} will be sent to ${args.callbackURL}`)
       return createdTranscription
     } else {
       debug('start fetching')

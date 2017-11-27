@@ -32,7 +32,10 @@ type Mutation {
   transcriptionCreate (
     fileURL: String!
     provider: ASRProvider!
-    options: String
+    callbackURL: String
+    vocabularyId: String
+    autoSplit: Boolean
+    customizationId: String
   ): Transcription
 }
 
