@@ -22,7 +22,10 @@ type Transcription {
 }
 
 type Query {
-  transcriptionById: Transcription
+  transcriptionById(
+    id: String!
+    provider: ASRProvider!
+  ): Transcription
 }
 
 type Mutation {
@@ -41,11 +44,11 @@ schema {
 
 const resolvers = {
   Query: {
-    // savedAudio: (_, { id }) => find(authors, { id: id }),
+    transcriptionById: (_, args) => transcriptionById(args)
   },
   Mutation: {
-    transcriptionCreate: (_, { provider, fileURL, options }) => {
-      return transcriptionCreate({provider, fileURL, options})
+    transcriptionCreate: (_, args) => {
+      return transcriptionCreate(args)
       .then(result => {
         debug('result', result)
         return result

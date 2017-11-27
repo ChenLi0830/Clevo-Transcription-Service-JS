@@ -1,6 +1,6 @@
 let fetch = require('isomorphic-fetch')
 require('dotenv').config()
-const debug = require('debug')('graphql-resolvers')
+const debug = require('debug')('aliyun-resolvers')
 const crypto = require('crypto')
 const date = new Date().toUTCString()
 
@@ -57,6 +57,8 @@ async function transcriptionCreate (args) {
       'app_key': 'nls-service-telephone8khz',
       'oss_link': args.fileURL,
       'auto_split': true
+      // enable_callback
+      // callback_url
     }),
     headers: {
       'accept': 'application/json',
@@ -70,25 +72,77 @@ async function transcriptionCreate (args) {
   try {
     let response = await fetch('https://nlsapi.aliyun.com/transcriptions', options)
     if (response.status >= 400) {
+      debug('response', response)
       throw new Error('Bad response from server')
     }
     let createdTranscription = await response.json()
     debug('createdTranscription', createdTranscription)
+
     if (options && options.callbackURL) {
       return createdTranscription
     } else {
-      // while (true) {
-      //   let fetchResult = 
-      // }
-      return createdTranscription
+      debug('start fetching')
+      // fetching transcription with interval
+      while (true) {
+        // fetch transcription
+        const { id } = createdTranscription
+        let fetchedTranscription = await transcriptionById({ id, provider: 'aliyun' })
+
+        if (fetchedTranscription.status === 'completed') {
+          return fetchedTranscription
+        } else if (fetchedTranscription.status === 'failed') {
+          debug('fetchedTranscription', fetchedTranscription)
+          throw new Error('fetchedTranscription failed')
+        } else {
+          debug('wait for 5 seconds...')
+          await new Promise((resolve, reject) => {
+            setTimeout(() => resolve(), 5000)
+          })
+        }
+      }
     }
   } catch (err) {
     console.error(err)
   }
 }
 
-function transcriptionById (args) {
+function formatTranscriptionToGraphqlType (trancription) {
+  if (trancription.status === 'FAILED') trancription.status = 'failed'
+  else if (trancription.status === 'SUCCEED') trancription.status = 'completed'
+  else trancription.status = 'processing'
+
+  trancription.result = JSON.stringify(trancription.result)
+
+  return trancription
+}
+
+async function transcriptionById (args) {
   debug('transcriptionById args', args)
+  let options = {
+    method: 'GET',
+    body: '',
+    headers: {
+      'accept': 'application/json',
+      'content-type': 'application/json',
+      'date': date,
+      'Authorization': ''
+    }
+  }
+  options = _addAuthSignitureToOption(options)
+
+  try {
+    let response = await fetch(`https://nlsapi.aliyun.com/transcriptions/${args.id}`, options)
+    if (response.status >= 400) {
+      debug('response', response)
+      throw new Error('Bad response from server')
+    }
+    let fetchedTranscription = await response.json()
+    debug('fetchedTranscription', fetchedTranscription)
+    fetchedTranscription = formatTranscriptionToGraphqlType(fetchedTranscription)
+    return fetchedTranscription
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 module.exports = {transcriptionCreate, transcriptionById}
