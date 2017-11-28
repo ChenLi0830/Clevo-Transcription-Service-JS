@@ -2,7 +2,6 @@ let fetch = require('isomorphic-fetch')
 require('dotenv').config()
 const debug = require('debug')('aliyun-resolvers')
 const crypto = require('crypto')
-const date = new Date().toUTCString()
 
 // 这里填写AK和请求
 const AccessKeyId = process.env.ACCESS_KEY_ID
@@ -65,7 +64,7 @@ async function transcriptionCreate (args) {
     headers: {
       'accept': 'application/json',
       'content-type': 'application/json',
-      'date': date,
+      'date': new Date().toUTCString(),
       'Authorization': ''
     }
   }
@@ -130,7 +129,7 @@ async function transcriptionById (args) {
     headers: {
       'accept': 'application/json',
       'content-type': 'application/json',
-      'date': date,
+      'date': new Date().toUTCString(),
       'Authorization': ''
     }
   }
