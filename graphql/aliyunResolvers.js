@@ -71,6 +71,8 @@ async function transcriptionCreate (args) {
   }
   options = _addAuthSignitureToOption(options)
 
+  // debug('options', options)
+
   try {
     let response = await fetch('https://nlsapi.aliyun.com/transcriptions', options)
     if (response.status >= 400) {
@@ -97,9 +99,10 @@ async function transcriptionCreate (args) {
           debug('fetchedTranscription', fetchedTranscription)
           throw new Error('fetchedTranscription failed')
         } else {
-          debug('wait for 5 seconds...')
+          let waitSec = 30
+          debug(`wait for ${waitSec} seconds...`)
           await new Promise((resolve, reject) => {
-            setTimeout(() => resolve(), 5000)
+            setTimeout(() => resolve(), waitSec * 1000)
           })
         }
       }
@@ -133,10 +136,12 @@ async function transcriptionById (args) {
   }
   options = _addAuthSignitureToOption(options)
 
+  // debug('options', options)
+
   try {
     let response = await fetch(`https://nlsapi.aliyun.com/transcriptions/${args.id}`, options)
     if (response.status >= 400) {
-      debug('response', response)
+      debug('error result', await response.json())
       throw new Error('Bad response from server')
     }
     let fetchedTranscription = await response.json()
