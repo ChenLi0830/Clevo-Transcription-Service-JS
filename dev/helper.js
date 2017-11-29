@@ -1,17 +1,49 @@
 const debug = require('debug')('helper')
 const { createApolloFetch } = require('apollo-fetch')
 
-async function removeExistFiles(queue) {
-  let urls = []
-  // Add audio urls which doesn't already exist in db
+async function removeExistFiles (queue) {
+  let allURLs = []
+
+  let CONCURRENCY = 100
+  // 并发
   while (queue.length > 0) {
-    let url = queue.pop()
-    let recordAlreadyExist = !!await getCallBySourceURL(url)
-    if (!recordAlreadyExist) {
-      urls.push(url)
+    let promises = []
+    let urlBatch = []
+    while (queue.length > 0 && promises.length < CONCURRENCY) {
+      let url = queue.pop()
+      urlBatch.push(url)
+      promises.push(getCallBySourceURL(url))
     }
+
+    let results = await Promise.all(promises)
+    debug(`checking ${urlBatch.length} urls`)
+    results.forEach((result, i) => {
+      // debug('result', result)
+      let recordAlreadyExist = !!result
+      if (recordAlreadyExist) {
+        debug(`file ${urlBatch[i]} already exist`)
+      } else {
+        // debug(`file ${urlBatch[i]} doesn't exist`)
+        allURLs.push(urlBatch[i])
+      }
+    })
   }
-  return urls
+
+  return allURLs
+
+  // // 串行
+  // // Add audio urls which doesn't already exist in db
+  // while (queue.length > 0) {
+  //   let url = queue.pop()
+  //   debug(`checking ${url}`)
+  //   let recordAlreadyExist = !!await getCallBySourceURL(url)
+  //   if (recordAlreadyExist) {
+  //     debug(`file ${url} already exist`)
+  //   } else {
+  //     urls.push(url)
+  //   }
+  // }
+  // return urls
 }
 
 async function getCallBySourceURL (url) {
@@ -43,9 +75,6 @@ async function getCallBySourceURL (url) {
     }
   })
     .then(result => {
-      if (result.data.callBySource) {
-        debug(`File already exist in DB: ${url}`)
-      }
       return result.data.callBySource
     })
 }

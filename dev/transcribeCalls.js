@@ -87,9 +87,10 @@
   }
 
   let startTime = new Date().getTime()
-  debug('transcribeAllCalls starts...', startTime)
   try {
+    debug('Removing transcribed audios...')
     queue = await removeExistFiles(queue)
+    debug('transcribeAllCalls starts...', startTime)
     await transcribeAllCalls(queue)
   } catch (error) {
     debug('error', error)
