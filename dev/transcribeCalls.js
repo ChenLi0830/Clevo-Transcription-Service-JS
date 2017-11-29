@@ -1,17 +1,15 @@
 (async () => {
   require('dotenv').config()
   const debug = require('debug')('localScript - transcribeCalls')
-
-  // let promises = []
-  // put 10 files into promises
-  let CONCURRENCY = 8
-  let CHECK_TRANSCRIPTION_INTERVAL = 5
-
   let fileNames = require('./fileNames')
+  let processedFileCount = 0
+
+  let CONCURRENCY = 10
+  let CHECK_TRANSCRIPTION_INTERVAL = 5
 
   let queue = fileNames.map(fileName => `http://processed-wav-dev-uswest.oss-us-west-1.aliyuncs.com/Youyin-test-Nov28/${fileName}`)
 
-  let { generateCreateTranscriptionPromise, generateGetTranscriptionPromise, saveTasksToServer } = require('./helper')
+  let { generateCreateTranscriptionPromise, generateGetTranscriptionPromise, saveTasksToServer, removeExistFiles } = require('./helper')
 
   async function wait (waitSec) {
     return new Promise(resolve => setTimeout(resolve, waitSec * 1000))
@@ -33,7 +31,7 @@
   async function transcribeCallBatch (createTranscriptionPromises, processingAudioURLs) {
     debug('createTranscriptionPromises', createTranscriptionPromises)
     let createdTranscriptionTasks = await Promise.all(createTranscriptionPromises)
-    debug('createdTranscriptionTasks', JSON.stringify(createdTranscriptionTasks))
+    // debug('createdTranscriptionTasks', JSON.stringify(createdTranscriptionTasks))
   //  处理创建失败的
 
     while (true) {
@@ -42,8 +40,8 @@
       // get getTranscriptionPromises
       createdTranscriptionTasks.forEach(result => {
         let task = result.data.transcriptionCreate
-        debug('task.id', task.id, 'task.status', task.status)
         if (task && task.id) {
+          debug('task.id', task.id, 'task.status', task.status)
           let getTranscriptionPromise = generateGetTranscriptionPromise(task.id)
           getTranscriptionPromises.push(getTranscriptionPromise)
         } else {
@@ -56,6 +54,7 @@
       debug('getTranscriptionPromises.length', getTranscriptionPromises.length)
       if (countFinishedTasks(transcriptionTasks) === getTranscriptionPromises.length) {
         await saveTasksToServer(transcriptionTasks, processingAudioURLs)
+        processedFileCount += getTranscriptionPromises.length
         break
       }
       await wait(CHECK_TRANSCRIPTION_INTERVAL)
@@ -89,8 +88,13 @@
 
   let startTime = new Date().getTime()
   debug('transcribeAllCalls starts...', startTime)
-  await transcribeAllCalls(queue)
+  try {
+    queue = await removeExistFiles(queue)
+    await transcribeAllCalls(queue)
+  } catch (error) {
+    debug('error', error)
+  }
   let endTime = new Date().getTime()
-  debug('transcribeAllCalls finished', endTime)
-  debug(`Processing ${queue.length} files took ${(endTime - startTime) / 1000}`)
+  debug('transcribeAllCalls finished at', endTime)
+  debug(`Processing ${processedFileCount} files took ${(endTime - startTime) / 1000} seconds`)
 })()

@@ -31,7 +31,7 @@ function _addAuthSignitureToOption (options) {
   // debug('bodymd5', bodymd5)
   // let stringToSign = options.method + '\n' + options.headers.accept + '\n' + bodymd5 + '\n' + options.headers['content-type'] + '\n' + options.headers.date + '\n' + url.parse(options.url).path
   let stringToSign = options.method + '\n' + options.headers.accept + '\n' + bodymd5 + '\n' + options.headers['content-type'] + '\n' + options.headers.date
-  debug('step1-Sign string:', stringToSign)
+  // debug('step1-Sign string:', stringToSign)
 
   // step2: 加密 [Signature = Base64( HMAC-SHA1( AccessSecret, UTF-8-Encoding-Of(StringToSign) ) )]
   let signature = sha1(stringToSign, AccessKeySecret)
@@ -39,9 +39,9 @@ function _addAuthSignitureToOption (options) {
 
   // step3: 组authorization header [Authorization =  Dataplus AccessKeyId + ":" + Signature]
   let authHeader = 'Dataplus ' + AccessKeyId + ':' + signature
-  console.log('step3-authorization Header:', authHeader)
+  // console.log('step3-authorization Header:', authHeader)
   options.headers.Authorization = authHeader
-  console.log('authHeader', authHeader)
+  // console.log('authHeader', authHeader)
 
   return options
 }
@@ -144,7 +144,7 @@ async function transcriptionById (args) {
       throw new Error('Bad response from server')
     }
     let fetchedTranscription = await response.json()
-    debug('fetchedTranscription', fetchedTranscription)
+    // debug('fetchedTranscription', fetchedTranscription)
     fetchedTranscription = formatTranscriptionToGraphqlType(fetchedTranscription)
     return fetchedTranscription
   } catch (error) {

@@ -1,6 +1,55 @@
 const debug = require('debug')('helper')
 const { createApolloFetch } = require('apollo-fetch')
 
+async function removeExistFiles(queue) {
+  let urls = []
+  // Add audio urls which doesn't already exist in db
+  while (queue.length > 0) {
+    let url = queue.pop()
+    let recordAlreadyExist = !!await getCallBySourceURL(url)
+    if (!recordAlreadyExist) {
+      urls.push(url)
+    }
+  }
+  return urls
+}
+
+async function getCallBySourceURL (url) {
+  const fetch = createApolloFetch({
+    uri: process.env.YOUYIN_SERVER_ENDPOINT || `http://localhost:3030/graphql`
+  })
+
+  const query = `
+    query callBySource (
+      # $organization: MongoID,
+      # $start: Date,
+      $sourceURL: String!
+    ) {  callBySource(
+      source: $sourceURL
+    ) {
+      status
+      source
+      transcription {
+        processor
+        taskId
+        status
+      }
+    }}
+  `
+  return fetch({
+    query,
+    variables: {
+      sourceURL: url
+    }
+  })
+    .then(result => {
+      if (result.data.callBySource) {
+        debug(`File already exist in DB: ${url}`)
+      }
+      return result.data.callBySource
+    })
+}
+
 function generateCreateTranscriptionPromise (audioURL) {
   const fetch = createApolloFetch({
     uri: process.env.JS_TRANSCRIBE_SPEECH_ENDPOINT || `http://localhost:3030/graphql`
@@ -144,8 +193,8 @@ async function saveTasksToServer (transcriptionTasks, processingAudioURLs) {
 
   return Promise.all(promises)
     .then(results => {
-      // debug('saved results', results)
+      debug('saved results', results)
     })
 }
 
-module.exports = {generateCreateTranscriptionPromise, generateGetTranscriptionPromise, saveTasksToServer}
+module.exports = {generateCreateTranscriptionPromise, generateGetTranscriptionPromise, saveTasksToServer, removeExistFiles}

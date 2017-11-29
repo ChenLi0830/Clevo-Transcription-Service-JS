@@ -53,7 +53,7 @@ const resolvers = {
     transcriptionCreate: (_, args) => {
       return transcriptionCreate(args)
       .then(result => {
-        debug('result', result)
+        // debug('result', result)
         return result
       })
     }
