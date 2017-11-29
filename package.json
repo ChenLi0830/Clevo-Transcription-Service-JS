@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "ali-oss": "^4.11.2",
+    "apollo-fetch": "^0.6.0",
     "crypto": "^1.0.1",
     "dotenv": "^4.0.0",
     "es6-promise": "^4.1.1",
