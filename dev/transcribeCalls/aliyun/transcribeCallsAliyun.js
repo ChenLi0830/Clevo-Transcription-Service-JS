@@ -1,13 +1,13 @@
 (async () => {
   require('dotenv').config()
   const debug = require('debug')('localScript - transcribeCalls')
-  let queue = require('./fileNames')
-  let processedFileCount = 0
+  let queue = require('../fileNames')
+  let { generateCreateTranscriptionPromise, generateGetTranscriptionPromise, saveTasksToServer, removeExistFiles } = require('./helperAliyun')
 
   let CONCURRENCY = 10
   let CHECK_TRANSCRIPTION_INTERVAL = 5
 
-  let { generateCreateTranscriptionPromise, generateGetTranscriptionPromise, saveTasksToServer, removeExistFiles } = require('./helper')
+  let processedFileCount = 0
 
   async function wait (waitSec) {
     return new Promise(resolve => setTimeout(resolve, waitSec * 1000))

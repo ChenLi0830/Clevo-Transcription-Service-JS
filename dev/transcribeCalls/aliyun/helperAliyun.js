@@ -48,7 +48,7 @@ async function removeExistFiles (queue) {
 
 async function getCallBySourceURL (url) {
   const fetch = createApolloFetch({
-    uri: process.env.YOUYIN_SERVER_ENDPOINT || `http://localhost:3030/graphql`
+    uri: process.env.YOUYIN_SERVER_ALI_ENDPOINT || `http://localhost:3030/graphql`
   })
 
   const query = `
@@ -145,7 +145,7 @@ async function saveTasksToServer (transcriptionTasks, processingAudioURLs) {
     let url = processingAudioURLs[i]
 
     const fetch = createApolloFetch({
-      uri: process.env.YOUYIN_SERVER_ENDPOINT || `http://localhost:4000/graphql`
+      uri: process.env.YOUYIN_SERVER_ALI_ENDPOINT || `http://localhost:4000/graphql`
     })
 
     const query = `

@@ -29,7 +29,8 @@
 
   async function getCallsByBatch (currentIndex, BATCH_SIZE) {
     const fetch = createApolloFetch({
-      uri: process.env.YOUYIN_SERVER_ENDPOINT || `http://localhost:3030/graphql`
+      uri: process.env.YOUYIN_SERVER_ALI_ENDPOINT || `http://localhost:3030/graphql`
+      // uri: process.env.YOUYIN_SERVER_XF_ENDPOINT || `http://localhost:3030/graphql`
     })
     const query = `
       query getCalls($callLimit: Int, $callSkip: Int) {
