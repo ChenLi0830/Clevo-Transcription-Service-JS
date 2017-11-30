@@ -1,13 +1,11 @@
 (async () => {
   require('dotenv').config()
   const debug = require('debug')('localScript - transcribeCalls')
-  let fileNames = require('./fileNames')
+  let queue = require('./fileNames')
   let processedFileCount = 0
 
   let CONCURRENCY = 10
   let CHECK_TRANSCRIPTION_INTERVAL = 5
-
-  let queue = fileNames.map(fileName => `http://processed-wav-dev-uswest.oss-us-west-1.aliyuncs.com/Youyin-test-Nov28/${fileName}`)
 
   let { generateCreateTranscriptionPromise, generateGetTranscriptionPromise, saveTasksToServer, removeExistFiles } = require('./helper')
 

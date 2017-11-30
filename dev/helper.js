@@ -4,7 +4,7 @@ const { createApolloFetch } = require('apollo-fetch')
 async function removeExistFiles (queue) {
   let allURLs = []
 
-  let CONCURRENCY = 100
+  let CONCURRENCY = 50
   // 并发
   while (queue.length > 0) {
     let promises = []

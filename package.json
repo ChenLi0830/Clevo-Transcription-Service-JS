@@ -21,6 +21,7 @@
     "graphql": "^0.11.7",
     "graphql-tools": "^2.7.2",
     "isomorphic-fetch": "^2.2.1",
+    "json2csv": "^3.11.5",
     "request": "^2.83.0",
     "request-promise": "^4.2.2",
     "url": "^0.11.0"
