@@ -35,10 +35,13 @@ function preprocessTranscripts (callTranscripts, transcriptProvider) {
 }
 
 function getAppearedKeywords (transcript, words) {
-  let result = []
+  let result = {}
   words.forEach(word => {
-    if (transcript.indexOf(word) > -1) result.push(word)
+    let re = new RegExp(word, 'g')
+    let count = (transcript.match(re) || []).length
+    if (count > 0) result[word] = count
   })
+  console.log('getAppearedKeywords result', result)
   return result
 }
 

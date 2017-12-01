@@ -11,26 +11,27 @@
     // debug('transcriptObjs', transcriptObjs)
     let dangerousCalls = []
 
-    for (let {url, transcript} of transcriptObjs) {
+    transcriptObjs.forEach(({url, transcript}, index) => {
       let keywords = getAppearedKeywords(transcript, words)
-      if (keywords.length > 0) {
+      if (Object.keys(keywords).length > 0) {
         let dangerousCall = {
           url,
           keywords,
-          transcript
+          transcript,
+          talkDuration: Math.floor(callTranscripts[index].breakdowns.slice(-1)[0].end / 1000)
         }
         debug(`found dangerous call`, dangerousCall)
         dangerousCalls.push(dangerousCall)
       }
-    }
+    })
 
     return dangerousCalls
   }
 
   async function getCallsByBatch (currentIndex, BATCH_SIZE) {
     const fetch = createApolloFetch({
-      uri: process.env.YOUYIN_SERVER_ALI_ENDPOINT || `http://localhost:3030/graphql`
-      // uri: process.env.YOUYIN_SERVER_XF_ENDPOINT || `http://localhost:3030/graphql`
+      // uri: process.env.YOUYIN_SERVER_ALI_ENDPOINT || `http://localhost:3030/graphql`
+      uri: process.env.YOUYIN_SERVER_XF_ENDPOINT || `http://localhost:3030/graphql`
     })
     const query = `
       query getCalls($callLimit: Int, $callSkip: Int) {
@@ -88,5 +89,5 @@
   })
   debug('dangerousCalls', dangerousCalls)
 
-  writeToCSV(dangerousCalls, ['filename', 'keywords', 'transcript'], 'riskyCalls.csv')
+  writeToCSV(dangerousCalls, ['filename', 'keywords', 'transcript', 'talkDuration'], 'riskyCalls.csv')
 })()
