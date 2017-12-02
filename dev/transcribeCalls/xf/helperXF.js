@@ -173,8 +173,12 @@ function generateGetTranscriptionPromise (id) {
 
 async function saveTasksToServer (transcriptionTasks, processingAudioURLs) {
   let promises = transcriptionTasks.map((task, i) => {
+    if (!task) {
+      // error
+      debug('transcriptionTasks is not processed successfully', task)
+      return Promise.resolve()
+    }
     task = task.data.transcriptionById || task.data.transcriptionCreate
-
     if (!task.result) {
       // error
       debug('transcriptionTasks is not processed successfully', task)

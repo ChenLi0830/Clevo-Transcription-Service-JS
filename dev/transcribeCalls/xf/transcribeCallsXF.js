@@ -33,8 +33,8 @@
     let timeout = 5 * 60 * 1000
     let transcriptionTasks = await promiseAllWithTimeout(createTranscriptionPromises, timeout)
     // remove unfinished tasks
-    transcriptionTasks = transcriptionTasks.filter(task => !!task)
-    debug(`Successfully transcribed ${transcriptionTasks.length} calls`)
+    // transcriptionTasks = transcriptionTasks.filter(task => !!task)
+    debug(`Successfully transcribed ${transcriptionTasks.filter(task => !!task).length} calls`)
     await saveTasksToServer(transcriptionTasks, processingAudioURLs)
     processedFileCount += transcriptionTasks.length
 
