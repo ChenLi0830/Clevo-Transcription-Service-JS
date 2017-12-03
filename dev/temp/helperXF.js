@@ -225,13 +225,14 @@ async function compareWithDBResult (transcriptionTasks, processingAudioURLs) {
       if (result.data && result.data.callBySource && result.data.callBySource.breakdowns) {
         queryTranscript = result.data.callBySource.breakdowns.map(breakdown => breakdown.transcript).join('|')
       }
-      debug('queryTranscript', queryTranscript.substr(0, xfTranscript.length))
+      queryTranscript = queryTranscript.substr(0, xfTranscript.length)
+      debug('queryTranscript', queryTranscript)
 
-      let similarity = stringSimilarity.compareTwoStrings(queryTranscript.substr(0, xfTranscript.length), xfTranscript)
+      let similarity = stringSimilarity.compareTwoStrings(queryTranscript, xfTranscript)
       debug('similarity', similarity)
 
       if (similarity < 0.5) {
-        fs.appendFile('unmatchedAudio.txt', `${url}@${similarity}\n`, function (err) {
+        fs.appendFile('unmatchedAudio.txt', `${url}@${similarity}\n${queryTranscript}\n${xfTranscript}\n`, function (err) {
           if (err) throw err
         })
       }
