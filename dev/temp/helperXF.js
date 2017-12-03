@@ -98,6 +98,7 @@ async function getCallBySourceURL (url) {
     ) {  callBySource(
       source: $sourceURL
     ) {
+      _id
       status
       source
       transcription {
@@ -115,6 +116,42 @@ async function getCallBySourceURL (url) {
   })
     .then(result => {
       return result.data.callBySource
+    })
+}
+
+async function removeCallBySource(source) {
+  return getCallBySourceURL(source)
+          .then(result => {
+            debug('getCallBySourceURL result', result)
+            debug('getCallBySourceURL id', result._id)
+            return removeCallByID(result._id)
+          })
+}
+
+async function removeCallByID (callId) {
+  const fetch = createApolloFetch({
+    uri: process.env.YOUYIN_SERVER_XF_ENDPOINT || `http://localhost:3030/graphql`
+  })
+
+  const query = `
+    mutation callDelete($callId: MongoID!){
+      callDelete(_id: $callId){
+        recordId
+        record{
+          source
+          _id
+        }
+      }
+    }
+  `
+  return fetch({
+    query,
+    variables: {
+      callId: callId
+    }
+  })
+    .then(result => {
+      return result.data.callDelete
     })
 }
 
@@ -225,12 +262,19 @@ async function compareWithDBResult (transcriptionTasks, processingAudioURLs) {
       if (result.data && result.data.callBySource && result.data.callBySource.breakdowns) {
         queryTranscript = result.data.callBySource.breakdowns.map(breakdown => breakdown.transcript).join('|')
       }
+      if (queryTranscript === null) {
+        return null
+      }
+
       queryTranscript = queryTranscript.substr(0, xfTranscript.length)
       debug('queryTranscript', queryTranscript)
 
       let similarity = stringSimilarity.compareTwoStrings(queryTranscript, xfTranscript)
       debug('similarity', similarity)
 
+      fs.appendFile('checkedFiles.txt', `${url}\n`, function (err) {
+        if (err) throw err
+      })
       if (similarity < 0.5) {
         fs.appendFile('unmatchedAudio.txt', `${url}@${similarity}\n${queryTranscript}\n${xfTranscript}\n`, function (err) {
           if (err) throw err
@@ -247,4 +291,4 @@ async function compareWithDBResult (transcriptionTasks, processingAudioURLs) {
     })
 }
 
-module.exports = {generateCreateTranscriptionPromise, generateGetTranscriptionPromise, compareWithDBResult, removeExistFiles, promiseAllWithTimeout}
+module.exports = {generateCreateTranscriptionPromise, generateGetTranscriptionPromise, compareWithDBResult, removeExistFiles, promiseAllWithTimeout, removeCallBySource}
