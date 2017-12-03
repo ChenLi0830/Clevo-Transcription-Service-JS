@@ -24,6 +24,7 @@
     "json2csv": "^3.11.5",
     "request": "^2.83.0",
     "request-promise": "^4.2.2",
+    "string-similarity": "^1.2.0",
     "url": "^0.11.0"
   }
 }

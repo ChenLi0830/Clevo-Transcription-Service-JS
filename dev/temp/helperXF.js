@@ -1,5 +1,8 @@
 const debug = require('debug')('helper')
 const { createApolloFetch } = require('apollo-fetch')
+const path = require('path')
+const stringSimilarity = require('string-similarity')
+var fs = require('fs')
 
 async function promiseAllWithTimeout (promises, timeout, resolvePartial = true) {
   return new Promise(function (resolve, reject) {
@@ -171,7 +174,7 @@ function generateGetTranscriptionPromise (id) {
   })
 }
 
-async function saveTasksToServer (transcriptionTasks, processingAudioURLs) {
+async function compareWithDBResult (transcriptionTasks, processingAudioURLs) {
   let promises = transcriptionTasks.map((task, i) => {
     if (!task) {
       // error
@@ -187,80 +190,53 @@ async function saveTasksToServer (transcriptionTasks, processingAudioURLs) {
 
     let url = processingAudioURLs[i]
 
+    let fileName = path.basename(url)
+    let serverSourceURL = `http://processed-wav-dev-uswest.oss-us-west-1.aliyuncs.com/Youyin-test-Nov28/${fileName}`
+
     const fetch = createApolloFetch({
       uri: process.env.YOUYIN_SERVER_XF_ENDPOINT || `http://localhost:4000/graphql`
     })
 
     const query = `
-    mutation callCreate (
-      $status: EnumCallStatus,
-      $transcription: CallTranscriptionInput,
-      $breakdowns: [CallCallBreakdownsInput]
-      $source: String
-    ) { 
-      callCreate (record: {
-        status: $status,
-        transcription: $transcription,
-        breakdowns: $breakdowns
-        source: $source
-      }) {
-        recordId
-        record {
-          _id,
-          status,
-          format,
-          encoding,
-          source,
-          transcription {
-              processor,
-              taskId,
-              status,
-              result
-          }
-          breakdowns {
-              begin
-              end
-              transcript
-              speaker
-          }
-          createdAt
-          updatedAt
+      query callBySource (
+        $sourceURL: String!
+      ) {  callBySource(
+        source: $sourceURL
+      ) {
+        status
+        breakdowns{
+          transcript
         }
-      }
-    }
+      }}    
     `
 
-    // debug('typeof task.result ', typeof task.result)
-    // task.result = JSON.parse(task.result)
-    // if (task.result)
-    // debug(task.result)
-
-    let breakdowns = JSON.parse(task.result).map(item => {
-      return {
-        begin: item.bg,
-        end: item.ed,
-        transcript: item.onebest,
-        speaker: item.speaker === 1 || item.speaker === '1' ? 'customer' : 'staff'
-      }
-    })
-
-    // debug('task.result', task.result)
-    // debug('breakdowns', breakdowns)
-    // debug('JSON.parse(result.result)', JSON.parse(result.result))
-    // debug('JSON.stringify(result.result)', JSON.stringify(result.result))
     return fetch({
       query,
       variables: {
-        status: 'active',
-        source: url,
-        transcription: {
-          'processor': 'iflytek',
-          'taskId': task.id,
-          'status': 'completed',
-          'result': task.result
-        },
-        'breakdowns': breakdowns
+        sourceURL: serverSourceURL
       }
+    })
+    .then(result => { // compare xfTranscript with queried transcript
+      if (typeof task.result === 'string') task.result = JSON.parse(task.result)
+      let xfTranscript = task.result.map(sentence => sentence.onebest).join('|')
+      debug('xfTranscript', xfTranscript)
+
+      let queryTranscript = null
+      if (result.data && result.data.callBySource && result.data.callBySource.breakdowns) {
+        queryTranscript = result.data.callBySource.breakdowns.map(breakdown => breakdown.transcript).join('|')
+      }
+      debug('queryTranscript', queryTranscript.substr(0, xfTranscript.length))
+
+      let similarity = stringSimilarity.compareTwoStrings(queryTranscript.substr(0, xfTranscript.length), xfTranscript)
+      debug('similarity', similarity)
+
+      if (similarity < 0.5) {
+        fs.appendFile('unmatchedAudio.txt', `${url}@${similarity}\n`, function (err) {
+          if (err) throw err
+        })
+      }
+
+      return similarity < 0.5 ? url : null
     })
   })
 
@@ -270,4 +246,4 @@ async function saveTasksToServer (transcriptionTasks, processingAudioURLs) {
     })
 }
 
-module.exports = {generateCreateTranscriptionPromise, generateGetTranscriptionPromise, saveTasksToServer, removeExistFiles, promiseAllWithTimeout}
+module.exports = {generateCreateTranscriptionPromise, generateGetTranscriptionPromise, compareWithDBResult, removeExistFiles, promiseAllWithTimeout}
