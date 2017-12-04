@@ -5,6 +5,8 @@
 
   const { preprocessTranscripts, getAppearedKeywords, writeToCSV } = require('./helper')
   const BATCH_SIZE = 50
+  let logAllCalls = true
+  // let logAllCalls = false
 
   async function filterCallsByWords (callTranscripts, words, transcriptProvider) {
     let transcriptObjs = preprocessTranscripts(callTranscripts, transcriptProvider)
@@ -13,7 +15,7 @@
 
     transcriptObjs.forEach(({url, transcript}, index) => {
       let keywords = getAppearedKeywords(transcript, words)
-      if (Object.keys(keywords).length > 0) {
+      if (Object.keys(keywords).length > 0 || logAllCalls) {
         let dangerousCall = {
           url,
           keywords,

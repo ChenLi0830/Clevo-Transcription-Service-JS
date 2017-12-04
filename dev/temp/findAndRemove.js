@@ -4,7 +4,7 @@
   const debug = require('debug')('findAndRemove - localscript')
 
   let toBeRemovedURLs = require('./toBeRemovedURLs')
-  let CON_CURRENCY = 2
+  let CON_CURRENCY = 10
 
   debug('toBeRemovedURLs', toBeRemovedURLs)
     // let source = 'http://processed-wav-dev-uswest.oss-us-west-1.aliyuncs.com/riskyCalls/2.wav'
